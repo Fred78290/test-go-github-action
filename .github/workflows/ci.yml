@@ -38,7 +38,8 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.prep.outputs.tag }}
         run:
-          mkdir -p /tmp/build/out /tmp/build/vendor
+          mkdir -p /tmp/build/out
+          mkdir -p /tmp/build/vendor
           ln -s /tmp/build/out out
           ln -s /tmp/build/vendor vendor
           make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION container
