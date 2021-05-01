@@ -37,7 +37,11 @@ jobs:
         shell: bash
         env:
           RELEASE_VERSION: ${{ steps.prep.outputs.tag }}
-        run: make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION container
+        run:
+          mkdir -p /tmp/build/out /tmp/build/vendor
+          ln -s /tmp/build/out out
+          ln -s /tmp/build/vendor vendor
+          make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION container
       - name: Package binaries
         if: startsWith(github.ref, 'refs/tags/v')
         run: tar -v --exclude builder --exclude vendor --exclude .github --exclude out --exclude .git --gzip --create --file=/tmp/test-go-github-action.tgz .
