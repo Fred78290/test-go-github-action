@@ -93,6 +93,7 @@ jobs:
         shell: bash
         run: |
           echo "Build docker image tag:${{ steps.prep.outputs.tag }}";
+          ls -l;
           make -e REGISTRY=$REGISTRY -e TAG="${{ steps.prep.outputs.tag }}" push-manifest
       - name: Prepare Release
         shell: bash
