@@ -57,6 +57,8 @@ jobs:
     env:
       REGISTRY: ${{ secrets.REGISTRY }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: prep
         run: |
           TAG=pr
