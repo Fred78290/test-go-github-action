@@ -102,9 +102,9 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
+          tag_name: ${{ steps.prep.outputs.tag }}
+          release_name: Release ${{ steps.prep.outputs.tag }}
+          draft: false
           files: |
             release/test-go-github-action-amd64
             release/test-go-github-action-arm64
