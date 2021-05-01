@@ -36,11 +36,9 @@ jobs:
           go-version: 1.16
       - name: Build binary
         shell: bash
-        env:
-          RELEASE_VERSION: ${{ steps.prep.outputs.tag }}
         run:
-          echo "Build with tag:${RELEASE_VERSION}"
-          make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION container ; sudo chown -R $USER out vendor
+          echo "Build with tag:${{ steps.prep.outputs.tag }}";
+          make -e REGISTRY=$REGISTRY -e TAG="${{ steps.prep.outputs.tag }}" container ; sudo chown -R $USER out vendor
       - name: Package binaries
         if: startsWith(github.ref, 'refs/tags/v')
         run: tar -v --exclude builder --exclude vendor --exclude .github --exclude out --exclude .git --gzip --create --file=/tmp/test-go-github-action.tgz .
@@ -85,8 +83,6 @@ jobs:
           name: binaries
       - name: Prepare docker buildx
         shell: bash
-        env:
-          RELEASE_VERSION: ${{ steps.prep.outputs.tag }}
         run: |
           docker buildx version;
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin;
@@ -94,8 +90,8 @@ jobs:
       - name: Build docker image
         shell: bash
         run: |
-          echo "Build docker image tag:${RELEASE_VERSION}"
-          make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION push-manifest
+          echo "Build docker image tag:${{ steps.prep.outputs.tag }}";
+          make -e REGISTRY=$REGISTRY -e TAG="${{ steps.prep.outputs.tag }}" push-manifest
       - name: Prepare Release
         shell: bash
         run: |
