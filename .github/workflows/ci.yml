@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - v*
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   build:
     runs-on: github-runner
@@ -48,6 +50,18 @@ jobs:
           name: binaries
           path: out
           if-no-files-found: error
+  sonarcloud:
+    name: SonarCloud
+    runs-on: github-runner
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   deploy:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
@@ -90,10 +104,6 @@ jobs:
         shell: bash
         run: |
           make -e REGISTRY=$REGISTRY -e TAG="${{ steps.prep.outputs.tag }}" push-manifest
-      - name: Package sources
-        run:
-          mkdir -p release;
-          tar -v --exclude builder --exclude vendor --exclude release --exclude .github --exclude out --exclude .git --gzip --create --file=release/sources.tgz .
       - name: Prepare Release
         shell: bash
         run: |
@@ -103,12 +113,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.prep.outputs.tag }}
-          release_name: Release ${{ steps.prep.outputs.tag }}
+        #  release_name: Release ${{ steps.prep.outputs.tag }}
           draft: false
           files: |
             release/test-go-github-action-amd64
             release/test-go-github-action-arm64
-            release/sources.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # You don't need to add this in secrets it's by default.      
 
