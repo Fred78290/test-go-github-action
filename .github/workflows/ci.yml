@@ -20,7 +20,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('go.mod') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
-      - name: Get Tag
+      - name: prep
         run: |
           TAG=pr
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
@@ -28,13 +28,15 @@ jobs:
           elif [[ $GITHUB_REF == refs/heads/* ]]; then
             TAG=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
           fi
-          echo ::set-env name=RELEASE_VERSION::${TAG}
+          echo ::set-output name=tag::${TAG}
       - name:  Setup Go environment
         uses: actions/setup-go@v2.1.3
         with:
           go-version: 1.16
       - name: Build binary
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.prep.outputs.tag }}
         run: make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION container
       - name: Package binaries
         if: startsWith(github.ref, 'refs/tags/v')
@@ -57,7 +59,7 @@ jobs:
     env:
       REGISTRY: ${{ secrets.REGISTRY }}
     steps:
-      - name: Get Tag
+      - name: prep
         run: |
           TAG=pr
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
@@ -65,7 +67,8 @@ jobs:
           elif [[ $GITHUB_REF == refs/heads/* ]]; then
             TAG=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
           fi
-          echo ::set-env name=RELEASE_VERSION::${TAG}
+          echo ::set-output name=tag::${TAG}
+        # echo ::set-env name=RELEASE_VERSION::${TAG}
       - name: Setup docker buildx
         uses: docker/setup-buildx-action@v1.3.0
       - name: Download math result for job 1
@@ -74,6 +77,8 @@ jobs:
           name: binaries
       - name: Build docker image
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.prep.outputs.tag }
         run: |
           docker buildx version
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
