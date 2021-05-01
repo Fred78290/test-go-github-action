@@ -38,10 +38,10 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.prep.outputs.tag }}
         run:
-          mkdir -p /tmp/build/out
-          mkdir -p /tmp/build/vendor
-          ln -s /tmp/build/out out
-          ln -s /tmp/build/vendor vendor
+          mkdir -p /tmp/build/out;
+          mkdir -p /tmp/build/vendor;
+          ln -s /tmp/build/out out;
+          ln -s /tmp/build/vendor vendor;
           make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION container
       - name: Package binaries
         if: startsWith(github.ref, 'refs/tags/v')
@@ -89,8 +89,8 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.prep.outputs.tag }}
         run: |
-          docker buildx version
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker buildx version;
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin;
           docker buildx create --use
       - name: Build docker image
         shell: bash
@@ -98,8 +98,8 @@ jobs:
       - name: Prepare Release
         shell: bash
         run: |
-          mkdir release
-          cp out/linux/amd64/test-go-github-action test-go-github-action-amd64
+          mkdir release;
+          cp out/linux/amd64/test-go-github-action test-go-github-action-amd64;
           cp out/linux/arm64/test-go-github-action test-go-github-action-arm64
       - name: Release
         uses: softprops/action-gh-release@v1
