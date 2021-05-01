@@ -20,7 +20,8 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('go.mod') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
-      - name: prep
+      - name: Prepare
+        id: prep
         run: |
           TAG=pr
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
@@ -60,7 +61,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: prep
+      - name: Prepare
+        id: prep
         run: |
           TAG=pr
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
