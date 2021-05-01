@@ -89,17 +89,16 @@ jobs:
       - name: Build docker image
         shell: bash
         run: |
-          echo "Build docker image tag:${{ steps.prep.outputs.tag }}";
-          ls -l;
           make -e REGISTRY=$REGISTRY -e TAG="${{ steps.prep.outputs.tag }}" push-manifest
       - name: Package sources
         run:
-          tar -v --exclude builder --exclude vendor --exclude test-go-github-action.tgz --exclude .github --exclude out --exclude .git --gzip --create --file=test-go-github-action.tgz .
+          mkdir -p release;
+          tar -v --exclude builder --exclude vendor --exclude release --exclude .github --exclude out --exclude .git --gzip --create --file=release/sources.tgz .
       - name: Prepare Release
         shell: bash
         run: |
-          cp out/linux/amd64/test-go-github-action test-go-github-action-amd64;
-          cp out/linux/arm64/test-go-github-action test-go-github-action-arm64
+          cp out/linux/amd64/test-go-github-action release/test-go-github-action-amd64;
+          cp out/linux/arm64/test-go-github-action release/test-go-github-action-arm64
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -107,8 +106,9 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: true
           files: |
-            test-go-github-action-amd64
-            test-go-github-action-arm64
+            release/test-go-github-action-amd64
+            release/test-go-github-action-arm64
+            release/sources.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # You don't need to add this in secrets it's by default.      
 
