@@ -1,0 +1,80 @@
+name: test-go-github-action
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ${{ secrets.REGISTRY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache vendor
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-vendor
+        with:
+          path: vendor
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+      - name: Get Tag
+        run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:10})
+      - name:  Setup Go environment
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.16
+      - name: Build binary
+        shell: bash
+        run: make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION container
+      - name: Package binaries
+        run: |
+          cp out/linux/amd64/test-go-github-action /tmp/test-go-github-action-amd64
+          cp out/linux/arm64/test-go-github-action /tmp/test-go-github-action-arm64
+          tar -v --exclude builder --exclude vendor --exclude .github --exclude out --exclude .git --gzip --create --file=/tmp/test-go-github-action.tgz .
+      - name: Output
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          name: binaries
+          path: |
+            /tmp/test-go-github-action-*
+            /tmp/test-go-github-action.tgz
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ${{ secrets.REGISTRY }}
+    steps:
+      - name: Get Tag
+        run: echo ::set-env name=RELEASE_VERSION::$(echo ${GITHUB_REF:10})
+      - name: Setup docker buildx
+        uses: docker/setup-buildx-action@v1.3.0
+      - name: Download math result for job 1
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries
+      - name: Build docker image
+        shell: bash
+        run: |
+          docker buildx version
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker buildx create --use
+          make -e REGISTRY=$REGISTRY -e TAG=$RELEASE_VERSION push-manifest
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          files: |
+            test-go-github-action-amd64
+            test-go-github-action-arm64
+            test-go-github-action.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # You don't need to add this in secrets it's by default.      
+
+      
+      
+
+
