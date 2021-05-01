@@ -16,14 +16,14 @@ VERSION_LDFLAGS=-X main.phVersion=$(TAG)
 
 IMAGE=$(REGISTRY)/test-go-github-action
 
-all: $(addprefix build-arch-,$(ALL_ARCH))
+all: deps $(addprefix build-arch-,$(ALL_ARCH))
 
 deps:
 	go mod vendor
 
 build: build-arch-$(GOARCH)
 
-build-arch-%: deps clean-arch-%
+build-arch-%: clean-arch-%
 	$(ENVVAR) GOOS=$(GOOS) GOARCH=$* go build -ldflags="-X main.phVersion=$(TAG) -X main.phBuildDate=$(BUILD_DATE)" -a -o out/$(GOOS)/$*/test-go-github-action ${TAGS_FLAG}
 
 container-push-manifest: container push-manifest
@@ -47,7 +47,7 @@ build-in-docker-arch-%: clean-arch-% docker-builder
 		-c 'cd /gopath/src/github.com/Fred78290/test-go-github-action \
 		&& BUILD_TAGS=${BUILD_TAGS} make -e REGISTRY=${REGISTRY} -e TAG=${TAG} -e BUILD_DATE=`date +%Y-%m-%dT%H:%M:%SZ` build-arch-$*'
 
-container: $(addprefix container-arch-,$(ALL_ARCH))
+container: deps $(addprefix container-arch-,$(ALL_ARCH))
 
 container-arch-%: build-in-docker-arch-%
 	@echo "Full in-docker image ${TAG}${FOR_PROVIDER}-$* completed"
